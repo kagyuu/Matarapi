@@ -1,0 +1,45 @@
+<configuration>
+    <!--
+    #####################
+    # pattern structure #
+    #####################
+     
+    http://logback.qos.ch/manual/layouts.html
+     
+    * %logger{length}
+        log source. this is the argument of LoggerFactory.getLogger(class). 
+        %logger{0} prints class name.
+     
+    * %date{pattern}, %date{pattern, timezone}
+        %date => 2006-10-20 14:06:49,812 (It's ISO8601)
+        %date{dd MMM yyy;HH:mm:ss.SSS} => 20 oct. 2006;14:05:49.812
+    * %relative          milliseconds elapsed from application start.
+    * %level             level
+    * %message, %msg     message
+    * %n                 \n or \r\n
+     
+    * %thread            thread
+    * %mdc{key:-default} MDC
+     
+    * %class{length}     log source. this came from stacktrace. very slow.
+    * %file              java source file name. very slow.
+    * %caller{depth}     show stack trace. very slow
+    * %method            method. very slow
+    * %line              line number. very slow
+     
+    * right padding      msg = 12345 => %-10msg = "12345     "
+    * highlight          %highlight(%-5level) %cyan(%logger{0})
+                         Jansi lib and <withJansi>true</withJansi>
+                         is needed if run on win.
+    -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <withJansi>true</withJansi>
+        <encoder>
+            <pattern>%date [%thread] %highlight(%-5level) %cyan(%-20logger{20}) %msg %n</pattern>
+        </encoder>
+    </appender>
+ 
+    <root level="DEBUG">
+        <appender-ref ref="STDOUT" />
+    </root>
+</configuration>
