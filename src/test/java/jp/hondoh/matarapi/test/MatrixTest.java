@@ -3,7 +3,7 @@
  */
 package jp.hondoh.matarapi.test;
 
-import jp.hondoh.matarapi.MatUtil;
+import jp.hondoh.matarapi.MatKernel;
 import jp.hondoh.matarapi.Matrix;
 import org.junit.Test;
 
@@ -12,7 +12,7 @@ import org.junit.Test;
  *
  * @author atsushi
  */
-public class MatUtilTest {
+public class MatrixTest {
 
     @Test
     public void testLU() throws Exception {
@@ -23,25 +23,33 @@ public class MatUtilTest {
             {10.0f, 34.0f, 78.0f, 98.0f},
         });
         // m0 will be over-writed to lu-matrix
-        Matrix expect = m0.deepcopy();
+        Matrix expect = m0.copyAll();
         
         // m0 => LU
         // oreder is row order for LU dividing
-        int[] order = MatUtil.lu(m0);
+        int[] order = m0.lu();
                 
         // divide m0 that is over-writed to LU mixed structure to L and U
-        Matrix l = MatUtil.l(m0);
-        Matrix u = MatUtil.u(m0);
+        Matrix l = m0.copyL();
+        Matrix u = m0.copyU();
         
         // L U => mul
-        Matrix mul = MatUtil.mul(l, u);
+        MatKernel kernel = new MatKernel(l, u, m0) {
+
+            @Override
+            public void run() {
+                matMul(0, 1, 2);
+            }
+        };
+        kernel.execute(m0.getSize());
+        Matrix mul = kernel.getMat(2);
         
         // revert row order
         mul.revertRow(order);
         
-//        System.out.println(l.toString());
-//        System.out.println(u.toString());
-//        System.out.println(mul.toString());
+        System.out.println(l.toString());
+        System.out.println(u.toString());
+        System.out.println(mul.toString());
         
         // LU expects m0
         MatAssert.assertMatrix(expect, mul, 1.0E-6f);        
