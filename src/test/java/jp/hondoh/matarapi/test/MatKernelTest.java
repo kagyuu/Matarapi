@@ -3,8 +3,11 @@
  */
 package jp.hondoh.matarapi.test;
 
+import jp.hondoh.matarapi.IMatrix;
 import jp.hondoh.matarapi.MatKernel;
 import jp.hondoh.matarapi.Matrix;
+import jp.hondoh.matarapi.MockMatrix;
+import static jp.hondoh.matarapi.test.MatAssert.assertMatrix;
 import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
@@ -25,7 +28,7 @@ public class MatKernelTest {
         {13.0f, 14.0f, 15.0f},
         {16.0f, 17.0f, 18.0f}
     });
-    Matrix m2 = new Matrix(3, 3);
+    IMatrix m2 = new MockMatrix(3, 3);
 
     @Test
     public void addTest() {
@@ -49,7 +52,7 @@ public class MatKernelTest {
             {23.0f, 25.0f, 27.0f}
         };
 
-        MatAssert.assertMatrix(expected, kernel.getMat(2).getData(), 1.0E-6f);
+        assertMatrix(expected, kernel.getMat(2).getData(), 1.0E-6f);
     }
 
     @Test
@@ -74,7 +77,7 @@ public class MatKernelTest {
             {-9.0f, -9.0f, -9.0f}
         };
 
-        MatAssert.assertMatrix(expected, kernel.getMat(2).getData(), 1.0E-6f);
+        assertMatrix(expected, kernel.getMat(2).getData(), 1.0E-6f);
     }
 
     @Test
@@ -99,9 +102,9 @@ public class MatKernelTest {
             {318.0f, 342.0f, 366.0f}
         };
 
-        MatAssert.assertMatrix(expected, kernel.getMat(2).getData(), 1.0E-6f);
+        assertMatrix(expected, kernel.getMat(2).getData(), 1.0E-6f);
     }
-
+    
     @Test
     public void hmulTest() {
 
@@ -124,7 +127,7 @@ public class MatKernelTest {
             {112.0f, 136.0f, 162.0f}
         };
 
-        MatAssert.assertMatrix(expected, kernel.getMat(2).getData(), 1.0E-6f);
+        assertMatrix(expected, kernel.getMat(2).getData(), 1.0E-6f);
     }
 
     @Test
@@ -149,7 +152,7 @@ public class MatKernelTest {
             {3.0f, 6.0f, 9.0f}
         };
 
-        MatAssert.assertMatrix(expected, kernel.getMat(1).getData(), 1.0E-6f);
+        assertMatrix(expected, kernel.getMat(1).getData(), 1.0E-6f);
     }
 
     @Test
@@ -170,12 +173,12 @@ public class MatKernelTest {
         assertTrue(kernel.isRunningCL());
 
         float[][] expected = new float[][]{
-            {3.0f, 1.0f, 2.0f},
-            {6.0f, 4.0f, 5.0f},
-            {9.0f, 7.0f, 8.0f}
+            {2.0f, 3.0f, 1.0f},
+            {5.0f, 6.0f, 4.0f},
+            {8.0f, 9.0f, 7.0f}
         };
         
-        MatAssert.assertMatrix(expected, kernel.getMat(2).getData(), 1.0E-6f);
+        assertMatrix(expected, kernel.getMat(2).getData(), 1.0E-6f);
     }
 
 
@@ -197,22 +200,11 @@ public class MatKernelTest {
         assertTrue(kernel.isRunningCL());
 
         float[][] expected = new float[][]{
+            {4.0f, 5.0f, 6.0f},
             {7.0f, 8.0f, 9.0f},
-            {1.0f, 2.0f, 3.0f},
-            {4.0f, 5.0f, 6.0f}
+            {1.0f, 2.0f, 3.0f}
         };
         
-        MatAssert.assertMatrix(expected, kernel.getMat(2).getData(), 1.0E-6f);
-    }
-    
-    private void dump(MatKernel kernel) {
-        System.out.println("M0");
-        System.out.println(kernel.getMat(0).toString());
-        System.out.println("M1");
-        System.out.println(kernel.getMat(1).toString());
-        System.out.println("M2");
-        System.out.println(kernel.getMat(2).toString());
-        System.out.println("Ary");
-        System.out.println(kernel.toString());
+        assertMatrix(expected, kernel.getMat(2).getData(), 1.0E-6f);
     }
 }

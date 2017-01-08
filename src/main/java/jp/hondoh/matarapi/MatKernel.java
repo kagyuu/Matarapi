@@ -31,9 +31,9 @@ public abstract class MatKernel extends Kernel {
      * Constructor.
      * @param data matrixes
      */
-    public MatKernel(Matrix ...data) {
+    public MatKernel(IMatrix ...data) {
         int arySize = 0;
-        for (Matrix m : data) {
+        for (IMatrix m : data) {
             arySize += m.getSize();
         }
         ary = new float[arySize];
@@ -43,18 +43,13 @@ public abstract class MatKernel extends Kernel {
 
         int p = 0;
         int n = 0;
-        for (Matrix m : data) {
+        for (IMatrix m : data) {
 
             offset[n] = p;
             matSize[n] = m.getRowSize() * m.getColSize();
             colSize[n] = m.getColSize();
 
-            for (float[] vec : m.getData()) {
-                for( float val : vec) {
-                    ary[p] = val;
-                    p += 1;
-                }
-            }
+            p = m.accept(ary, p);
             n += 1;
         }
     }
@@ -75,6 +70,8 @@ public abstract class MatKernel extends Kernel {
      * |a b c|   |A B C|    |a+A b+B c+C|
      * |d e f| + |D E F| -> |d+D e+E f+F|
      * |g h i|   |G H I|    |g+G h+H i+I|
+     * 
+     * paralles size : matrix size (= row * col)
      * </pre>
      * @param in1 input1
      * @param in2 input2
@@ -98,6 +95,8 @@ public abstract class MatKernel extends Kernel {
      * |a b c|   |A B C|    |a-A b-B c-C|
      * |d e f| - |D E F| -> |d-D e-E f-F|
      * |g h i|   |G H I|    |g-G h-H i-I|
+     * 
+     * paralles size : matrix size (= row * col)
      * </pre>
      * @param in1 input1
      * @param in2 input2
@@ -128,6 +127,8 @@ public abstract class MatKernel extends Kernel {
      * cf.
      * ReLu-1(x) = 0 (x <  0)
      *             1 (x >= 0)
+     * 
+     * paralles size : matrix size (= row * col)
      * </pre>
      * @param in input
      * @param out output
@@ -154,6 +155,8 @@ public abstract class MatKernel extends Kernel {
      * ReLu(x) = max(0,x)
      *         = 0 (x <  0)
      *           x (x >= 0)
+     * 
+     * paralles size : matrix size (= row * col)
      * </pre>
      * @param in input
      * @param out output
@@ -175,6 +178,8 @@ public abstract class MatKernel extends Kernel {
      * |a b c|   |A B C|    |aA+bD+cG dA+eD+fG gA+hD+iG|
      * |d e f| X |D E F| -> |aB+bE+cH dB+eE+fH gB+hE+iH|
      * |g h i|   |G H I|    |aC+aF+aI dC+eF+fI gC+hF+iI|
+     * 
+     * paralles size : matrix size (= row * col)
      * </pre>
      * @param in1 input1
      * @param in2 input2
@@ -204,7 +209,190 @@ public abstract class MatKernel extends Kernel {
         }
         ary[p0] = mul;
     }
+    
+    /**
+     * multiple LU.
+     * <pre>
+     * in1       in2        out
+     * |a 0 0|   |1 B C|    |a aB   aC      |
+     * |d e 0| X |0 1 F| -> |d dB+e dC+eF   |
+     * |g h i|   |0 0 1|    |g gB+h gC+hF+i |
+     * 
+     * in1 and in2 is combined represnted in arg 'in'
+     * |a B C|
+     * |d e F|
+     * |g h i|
+     * 
+     * paralles size : matrix size (= row * col)
+     * </pre>
+     * @param in  input
+     * @param out output
+     */
+    protected void matMulLU(int in, int out) {
+        
+        int i = getGlobalId();
+        
+        int size = colSize[in];
 
+        int col = i % size;
+        int row = (i - col) / size;
+        
+        int p0 = offset[out] + i;
+        int pL = offset[in] + size * row;
+        int pU = offset[in] + col;
+
+        float mul = 0.0f;
+        int step = min(col, row);
+        for (int cnt=0; cnt <= step; cnt++) {
+            if (col == cnt) {
+                mul += ary[pL];
+            } else {
+                mul += ary[pL] * ary[pU];
+            }
+            pL += 1;
+            pU += size;
+        }
+        ary[p0] = mul;
+    }
+
+    /**
+     * multiple UL.
+     * <pre>
+     * in1       in2        out
+     * |1 B C|   |a 0 0|    |a+Bd+Cg Be+Ch Ci |
+     * |0 1 F| X |d e 0| -> |d+Fg    e+FH  Fi |
+     * |0 0 1|   |g h i|    |g       h     i  |
+     * 
+     * in1 and in2 is combined represnted in arg 'in'
+     * |a B C|
+     * |d e F|
+     * |g h i|
+     * 
+     * paralles size : matrix size (= row * col)
+     * </pre>
+     * @param in  input
+     * @param out output
+     */
+    protected void matMulUL(int in, int out) {
+        
+        int i = getGlobalId();
+        
+        int size = colSize[in];
+
+        int col = i % size;
+        int row = (i - col) / size;
+        int skip = max(row, col);
+        
+        int p0 = offset[out] + i;
+        int pU = offset[in] + size * row + skip;
+        int pL = offset[in] + col + size * skip;
+
+        float mul = 0.0f;
+        for (int cnt=skip; cnt < size; cnt++) {
+            if (row == cnt) {
+                mul += ary[pL];
+            } else {
+                mul += ary[pU] * ary[pL];
+            }
+            pU += 1;
+            pL += size;
+        }
+        ary[p0] = mul;
+    }
+    
+    /**
+     * ivert Upper triangle matrix.
+     * <pre>
+     * in        out        E
+     * |1 b c|   |1 B C|    |1 0 0|
+     * |0 1 f| X |0 1 F| -> |0 1 0|
+     * |0 0 1|   |0 0 1|    |0 0 1|
+     * 
+     * The Lower triangle of input matrix, includes diagonal components '1'
+     * , is ignored.
+     * 
+     * paralles size : col size
+     * </pre>
+     * @param in  input
+     * @param out output
+     */
+    protected void matInvU(int in, int out) {
+        
+        int k = getGlobalId();
+        
+        int size = colSize[in];
+        
+        if (k > size) { return; }
+        
+        int p0 = offset[out] + size * k + k;        
+        ary[p0] = 1.0f;
+        
+        float inv;
+        int pU, pUi;
+        for (int i = k - 1; i >= 0; i--) {
+            inv = 0.0f;
+            
+            int j = i + 1;
+            pU = offset[in] + size * i + j; // U[i][j]
+            pUi = offset[out] + size * j + k; // U-1[j][k]
+            for (; j <= k; j++) {
+                inv -= ary[pU] * ary[pUi];
+                
+                pU += 1;     // move right
+                pUi += size; // move down
+            }
+            p0 -= size; // move up
+            ary[p0] = inv;
+        }
+    }
+    
+    /**
+     * ivert Lower triangle matrix.
+     * <pre>
+     * in        out        E
+     * |a 0 0|   |A 0 0|    |1 0 0|
+     * |d e 0| X |D E 0| -> |0 1 0|
+     * |g h i|   |G H I|    |0 0 1|
+     * 
+     * The Upper triangle of input matrix is ignored.
+     * 
+     * paralles size : col size
+     * </pre>
+     * @param in  input
+     * @param out output
+     */
+    protected void matInvL(int in, int out) {
+        
+        int k = getGlobalId();
+        
+        int size = colSize[in];
+        
+        if (k > size) { return; }
+        
+        int p0 = offset[out] + size * k + k;
+        int p1 = offset[in] + size * k + k;
+        ary[p0] = 1.0f / ary[p1];
+        
+        float inv;
+        int pL, pLi;
+        for (int i = k + 1; i < size; i++) {
+            inv = 0.0f;
+            
+            int j = k;
+            pL = offset[in] + size * i + j; // L[i][j]
+            pLi = offset[out] + size * j + j; // L-1[j][k]
+            for (; j <= i-1; j++) {
+                inv -= ary[pL] * ary[pLi];
+                
+                pL += 1;     // move right
+                pLi += size; // move down
+            }
+            p0 += size; // move down
+            // L-1[i][k] = - (Σ(L[i][j]*L-1[j][k]) / L[i][i]
+            ary[p0] = inv / ary[offset[in] + size * i + i]; 
+        }
+    }
+    
     /**
      * calculate hadamard product.
      * <pre>
@@ -235,6 +423,8 @@ public abstract class MatKernel extends Kernel {
      * |a b c| = |a d|
      * |d e f|   |b e|
      *           |c f|
+     * 
+     * paralles size : matrix size (= row * col)
      * </pre>
      * @param in input
      * @param out output
@@ -264,7 +454,12 @@ public abstract class MatKernel extends Kernel {
      * |d e f|   |e d f|
      * |g h i|   |h g i|
      * 
-     * order = [1,0,2]
+     * order = [1,0,2] means:
+     * Col 0 -> Col 1
+     * Col 1 -> Col 0
+     * Col 2 -> Col 2
+     * 
+     * paralles size : matrix size (= row * col)
      * </pre>
      * @param in input
      * @param out output
@@ -280,9 +475,9 @@ public abstract class MatKernel extends Kernel {
 
         int col = i % c1;
         int row = (i - col) / c1;
-
-        int p1 = offset[in] + order[col] + c0 * row;
-        int p0 = offset[out] + i;
+        
+        int p0 = offset[out] + order[col] + c0 * row;
+        int p1 = offset[in] + i;
 
         ary[p0] = ary[p1];
     }
@@ -295,7 +490,12 @@ public abstract class MatKernel extends Kernel {
      * |d e f|   |a b c|
      * |g h i|   |g h i|
      * 
-     * order = [1,0,2]
+     * order = [1,0,2] means:
+     * Row 0 -> Row 1
+     * Row 1 -> Row 0
+     * Row 2 -> Row 2
+     * 
+     * paralles size : matrix size (= row * col)
      * </pre>
      * @param in input
      * @param out output
@@ -312,8 +512,8 @@ public abstract class MatKernel extends Kernel {
         int col = i % c1;
         int row = (i - col) / c1;
 
-        int p1 = offset[in] + col + c0 * order[row];
-        int p0 = offset[out] + i;
+        int p0 = offset[out] + col + c0 * order[row];
+        int p1 = offset[in] + i;
 
         ary[p0] = ary[p1];
     }

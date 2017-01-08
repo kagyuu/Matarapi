@@ -16,12 +16,17 @@ import lombok.Data;
 
 /**
  * Matrix data structure for Matarapi.
+ *
  * @author a.ho
  */
 @Data
-public class Matrix {
+public class Matrix implements IMatrix {
 
     private float[][] data;
+    
+    public Matrix(final int rowcol) {
+        this(rowcol, rowcol);        
+    }
 
     public Matrix(final int row, final int col) {
         data = new float[row][col];
@@ -43,14 +48,17 @@ public class Matrix {
         }
     }
 
+    @Override
     public final int getSize() {
         return getRowSize() * getColSize();
     }
 
+    @Override
     public final int getRowSize() {
         return data.length;
     }
 
+    @Override
     public final int getColSize() {
         return data[0].length;
     }
@@ -62,34 +70,21 @@ public class Matrix {
     public final float getVal(final int row, final int col) {
         return data[row][col];
     }
-    
-    public final void sortRow(final int[] order) {
-        float[][] cpy = Arrays.copyOf(data, data.length);
-        for (int cnt=0; cnt < data.length; cnt++) {
-            data[cnt] = cpy[order[cnt]];
-        }
-    }
-    
-    public final void revertRow(final int[] order) {
-        float[][] cpy = Arrays.copyOf(data, data.length);
-        for (int cnt=0; cnt < data.length; cnt++) {
-            data[order[cnt]] = cpy[cnt];
-        }
-    }
 
     /**
      * copy all (deep copy).
+     *
      * @return whole copy of this matrix
      */
     public Matrix copyAll() {
         List<float[]> cpy = new ArrayList<>();
-        
-        for(float[] row : data) {
+
+        for (float[] row : data) {
             cpy.add(Arrays.copyOf(row, row.length));
         }
         return new Matrix(cpy.toArray(new float[0][]));
     }
-    
+
     /**
      * copy lower triangle (deep copy).
      * <pre>
@@ -98,6 +93,7 @@ public class Matrix {
      * |d e f|    |d e 0|
      * |g h i|    |g h i|
      * </pre>
+     *
      * @return copy of the lower triangle in this matrix
      */
     public Matrix copyL() {
@@ -120,6 +116,7 @@ public class Matrix {
      * |d e f|    |0 1 f|
      * |g h i|    |0 0 1|
      * </pre>
+     *
      * @return copy of the lower triangle in this matrix
      */
     public Matrix copyU() {
@@ -134,7 +131,7 @@ public class Matrix {
 
         return new Matrix(cpy);
     }
-    
+
     /**
      * LU decomposition.
      * <pre>
@@ -143,21 +140,21 @@ public class Matrix {
      * |a b c| = |l(11) 0     0    ||1     u(12) u(13)|
      * |d e f|   |l(21) l(22) 0    ||0     1     u(23)|
      * |g h i|   |l(31) l(32) l(33)||0     0     1    |
-     * 
+     *
      * 2. LU is stored in the 'data' variable as following structure
      * data
      * |l(11) u(12) u(13)|
      * |l(21) l(22) u(23)|
      * |l(31) l(32) l(33)|
-     * 
+     *
      * # The diagonal component of the upper triangle is ommited in this structure,
      * # because all these are always 1.
      * </pre>
+     *
      * @return sort order by pivotting
-     * @throws InterruptedException
-     * @throws ExecutionException 
+     * @throws ExecutionException
      */
-    public int[] lu() throws InterruptedException, ExecutionException {
+    public int[] toLU() throws ExecutionException {
         final int colSize = getColSize();
         final int rowSize = getRowSize();
 
@@ -171,7 +168,7 @@ public class Matrix {
         try {
             for (int s = 0; s < colSize; s++) {
                 final int ss = s;
-                
+
                 // === l[y][s] ===
                 for (int y = ss; y < rowSize; y++) {
                     final int yy = y;
@@ -179,14 +176,14 @@ public class Matrix {
                         for (int k = 0; k < ss; k++) {
                             data[o[yy]][ss] -= data[o[yy]][k] * data[o[k]][ss];
                         }
-                    }));                    
+                    }));
                 }
-                
+
                 // === pivot select ===
                 while (!fQueue.isEmpty()) {
                     (fQueue.poll()).get();
                 }
-                
+
                 int maxLidx = -1;
                 float maxL = 0.0f, tmp;
                 for (int y = ss; y < rowSize; y++) {
@@ -196,7 +193,7 @@ public class Matrix {
                         maxL = tmp;
                     }
                 }
-                
+
                 if (maxLidx < 0) {
                     // ie. l[i][i] == 0, in other words, Matrix m has no l and u strictly.
                     // But this method calculate an approximation on the assumption that
@@ -234,14 +231,102 @@ public class Matrix {
             }
 
             // === sort ===
-            sortRow(o);
+            float[][] cpy = Arrays.copyOf(data, data.length);
+            for (int cnt = 0; cnt < data.length; cnt++) {
+                data[cnt] = cpy[o[cnt]];
+            }
 
             return o;
+        } catch (InterruptedException interruptedEx) {
+            throw new ExecutionException(interruptedEx);
         } finally {
             ex.shutdown();
         }
     }
+
+    /**
+     * overwrite unit (identical) matrix.
+     * <pre>
+     * data       data
+     * |a b c| => |1 0 0|
+     * |d e f|    |0 1 0|
+     * |g h i|    |0 0 1|
+     * 
+     * E is an initial letter of Einheitsmatrix, Identical Matrix in Germany.
+     * This method same as toI();
+     * </pre>
+     * @return this object
+     */
+    public Matrix toE() {
+        
+        int rowNo = 0;
+        for (float[] row : data) {
+            for (int colNo = 0; colNo < row.length; colNo++) {
+                row[colNo] = (rowNo == colNo ? 1.0f : 0.0f);
+            }
+            rowNo += 1;
+        }
+        
+        return this;
+    }
     
+    /**
+     * overwrite zero (null) matrix .
+     * <pre>
+     * data       data
+     * |a b c| => |0 0 0|
+     * |d e f|    |0 0 0|
+     * |g h i|    |0 0 0|
+     * </pre>
+     * @return this object
+     */
+    public Matrix toZ() {
+        
+        int rowNo = 0;
+        for (float[] row : data) {
+            for (int colNo = 0; colNo < row.length; colNo++) {
+                row[colNo] = 0.0f;
+            }
+            rowNo += 1;
+        }
+        
+        return this;
+    }
+    
+    /**
+     * overwrite unit (identical) matrix.
+     * <pre>
+     * data       data
+     * |a b c| => |1 0 0|
+     * |d e f|    |0 1 0|
+     * |g h i|    |0 0 1|
+     * 
+     * I is an initial letter of Identical Matrix.
+     * This method same as toE();
+     * </pre>
+     * @return this object
+     */
+    public Matrix toI() {
+        return toE();
+    }
+    
+    /**
+     * copy containts data to ary.
+     * @param ary data array
+     * @param p write pointer
+     * @return next pointer
+     */    
+    @Override
+    public int accept(float[] ary, int p) {
+        for (float[] vec : data) {
+            for (float val : vec) {
+                ary[p] = val;
+                p += 1;
+            }
+        }
+        return p;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -252,7 +337,7 @@ public class Matrix {
             }
             sb.append("\n");
         }
-        
+
         return sb.toString();
     }
 }
