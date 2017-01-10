@@ -35,7 +35,7 @@ public class Matrix implements IMatrix {
     public Matrix(final float[][] initval) {
         data = initval;
     }
-
+    
     public Matrix(final float[] ary, final int offset, final int row, final int col) {
         this(row, col);
 

@@ -7,10 +7,10 @@ import jp.hondoh.matarapi.IMatrix;
 import jp.hondoh.matarapi.MatKernel;
 import jp.hondoh.matarapi.Matrix;
 import jp.hondoh.matarapi.MockMatrix;
-import static jp.hondoh.matarapi.test.MatAssert.assertInvert;
 import static jp.hondoh.matarapi.test.MatAssert.assertMatrix;
 import static org.junit.Assert.assertTrue;
 import org.junit.Test;
+import static jp.hondoh.matarapi.test.MatAssert.assertMatrixInvert;
 
 /**
  * LU calculation test.
@@ -118,7 +118,7 @@ public class MatKernelLUTest {
 //        System.out.println(u);
 //        System.out.println(invU);
         
-        assertInvert(u, invU, 1.0E-6f);
+        assertMatrixInvert(u, invU, 1.0E-6f);
     }
     
     @Test
@@ -146,6 +146,6 @@ public class MatKernelLUTest {
 //        System.out.println(l);
 //        System.out.println(invL);
         
-        assertInvert(l, invL, 1.0E-6f);
+        assertMatrixInvert(l, invL, 1.0E-6f);
     }
 }

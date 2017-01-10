@@ -40,7 +40,7 @@ public class MatAssert {
      * @param b matrix
      * @param delta allowable margin
      */
-    public static void assertInvert(IMatrix a, IMatrix b, float delta) {
+    public static void assertMatrixInvert(IMatrix a, IMatrix b, float delta) {
 
         IMatrix actual = new MockMatrix(a.getRowSize(), a.getColSize());
         MatKernel kernel = new MatKernel(a, b, actual) {

@@ -7,9 +7,9 @@ import jp.hondoh.matarapi.IMatrix;
 import jp.hondoh.matarapi.MatKernel;
 import jp.hondoh.matarapi.Matrix;
 import jp.hondoh.matarapi.MockMatrix;
-import static jp.hondoh.matarapi.test.MatAssert.assertInvert;
 import static jp.hondoh.matarapi.test.MatAssert.assertMatrix;
 import org.junit.Test;
+import static jp.hondoh.matarapi.test.MatAssert.assertMatrixInvert;
 
 /**
  * Simple calculation test.
@@ -78,17 +78,17 @@ public class MatrixTest {
 
             @Override
             public void run() {
-                int path = getPassId();
+                int pass = getPassId();
                 // Can't use switch statement on Aparapi.
-                if (0 == path) {
+                if (0 == pass) {
                     // U => U(-1)
                     matInvU(0,1);
                     // L => L(-1)
                     matInvL(0,1);
-                } else if (1 == path) {
+                } else if (1 == pass) {
                     // U(-1) L(-1) => A(-1)
                     matMulUL(1,0);
-                } else if (2 == path) {
+                } else if (2 == pass) {
                     // revert pivoting                    
                     matSortCol(0,1,order);
                 }
@@ -101,8 +101,8 @@ public class MatrixTest {
 //        System.out.println(invert);
         
         // precision is not well, but its ok.
-        // It's enough for the maching learning.
-        // We don't use GPGPU for Rockent Science.
-        assertInvert(original, invert, 1.0E-5f);
+        // It's enough for the machine learning.
+        // We don't use GPGPU for Rocket Science.
+        assertMatrixInvert(original, invert, 1.0E-5f);
     }
 }
