@@ -1,7 +1,7 @@
 /*
  * Copyright 2017 HONDOH Atsushi.
  */
-package jp.hondoh.matarapi;
+package com.matarapi;
 
 import com.aparapi.Kernel;
 

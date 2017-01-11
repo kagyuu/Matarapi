@@ -1,16 +1,16 @@
 /*
  * Copyright 2017 HONDOH Atsushi.
  */
-package jp.hondoh.matarapi.test;
+package com.matarapi.test;
 
-import jp.hondoh.matarapi.IMatrix;
-import jp.hondoh.matarapi.MatKernel;
-import jp.hondoh.matarapi.Matrix;
-import jp.hondoh.matarapi.MockMatrix;
-import static jp.hondoh.matarapi.test.MatAssert.assertMatrix;
+import com.matarapi.IMatrix;
+import com.matarapi.MatKernel;
+import com.matarapi.Matrix;
+import com.matarapi.MockMatrix;
+import static com.matarapi.test.MatAssert.assertMatrix;
 import static org.junit.Assert.assertTrue;
 import org.junit.Test;
-import static jp.hondoh.matarapi.test.MatAssert.assertMatrixInvert;
+import static com.matarapi.test.MatAssert.assertMatrixInvert;
 
 /**
  * LU calculation test.

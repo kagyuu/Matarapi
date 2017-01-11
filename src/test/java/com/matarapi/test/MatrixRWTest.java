@@ -1,12 +1,12 @@
 /*
  * Copyright 2017 HONDOH Atsushi.
  */
-package jp.hondoh.matarapi.test;
+package com.matarapi.test;
 
 import java.util.List;
-import jp.hondoh.matarapi.Matrix;
-import jp.hondoh.matarapi.MatrixJSON;
-import static jp.hondoh.matarapi.test.MatAssert.assertMatrix;
+import com.matarapi.Matrix;
+import com.matarapi.MatrixJSON;
+import static com.matarapi.test.MatAssert.assertMatrix;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
