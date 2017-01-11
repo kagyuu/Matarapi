@@ -21,6 +21,10 @@ public class MatAssert {
         assertMatrix(null, expecteds.getData(), actuals.getData(), delta);
     }
 
+    public static void assertMatrix(float[][] expecteds, IMatrix actuals, float delta) {
+        assertMatrix(null, expecteds, actuals.getData(), delta);
+    }
+    
     public static void assertMatrix(float[][] expecteds, float[][] actuals, float delta) {
         assertMatrix(null, expecteds, actuals, delta);
     }

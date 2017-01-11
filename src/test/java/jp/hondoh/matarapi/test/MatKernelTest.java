@@ -106,6 +106,43 @@ public class MatKernelTest {
     }
     
     @Test
+    public void mulTest2() {
+        Matrix mA = new Matrix(new float[][]{
+            {1.0f, 2.0f, 3.0f},
+            {4.0f, 5.0f, 6.0f}
+        });
+        Matrix mB = new Matrix(new float[][]{
+            {10.0f, 11.0f},
+            {13.0f, 14.0f},
+            {16.0f, 17.0f}
+        });
+        IMatrix mC = new MockMatrix(2,2);
+
+        MatKernel kernel = new MatKernel(mA, mB, mC) {
+
+            @Override
+            public void run() {
+                matMul(0, 1, 2);
+            }
+        };
+
+        kernel.execute(mC.getSize());
+        mC = kernel.getMat(2);
+
+        // running on OpenCL?
+        assertTrue(kernel.isRunningCL());
+
+        System.out.println(mC.toString());
+        
+        float[][] expected = new float[][]{
+            {84.0f, 90.0f},
+            {201.0f, 216.0f}
+        };
+
+        assertMatrix(expected, mC, 1.0E-6f);
+    }
+    
+    @Test
     public void hmulTest() {
 
         MatKernel kernel = new MatKernel(m0, m1, m2) {
