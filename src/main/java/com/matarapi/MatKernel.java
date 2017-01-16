@@ -231,6 +231,7 @@ public abstract class MatKernel extends Kernel {
     protected void matMulLU(int in, int out) {
         
         int i = getGlobalId();
+        if (i > matSize[out]) return;
         
         int size = colSize[in];
 
@@ -276,6 +277,7 @@ public abstract class MatKernel extends Kernel {
     protected void matMulUL(int in, int out) {
         
         int i = getGlobalId();
+        if (i > matSize[out]) return;
         
         int size = colSize[in];
 
